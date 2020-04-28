@@ -1,4 +1,4 @@
 # covid19-splunk-app
-Splunk dashboards for COVID19
+COVID19 Dashboards and Analytics. Built for Splunk.
 
-Coming soon! Check back on 2020-04-29. Thanks for your interest!
+Uses COVID-19 data from @CSSEGISandData (https://github.com/CSSEGISandData/COVID-19)
