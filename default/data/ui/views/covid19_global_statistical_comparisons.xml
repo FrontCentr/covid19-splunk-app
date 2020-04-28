@@ -1,0 +1,398 @@
+<form theme="dark">
+  <label>COVID-19 - Global - Statistical Comparisons (Country)</label>
+  <description>Custom Visualizations created by @FrontCentr showing coronavirus data from Johns Hopkins University CSSE (github.com/CSSEGISandData). Global population data from The World Factbook.</description>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="dates" searchWhenChanged="true">
+      <label>Dates</label>
+      <choice value="placeholder">Show</choice>
+      <choice value="date">Hide</choice>
+      <default>date</default>
+    </input>
+    <input type="text" token="top" searchWhenChanged="true">
+      <label>Top</label>
+      <default>5</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>CONFIRMED CASES - Lowest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region
+| sort $top$ "Confirmed"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Confirmed">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>CONFIRMED CASES - Highest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region
+| sort $top$ -"Confirmed"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Confirmed">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>CONFIRMED per capita (Incident Rate) - Lowest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| join Country_Region
+    [| inputlookup world-population-est2020.csv
+    | fields country population
+    | rename country AS Country_Region
+    | eval country=if(country="US","United States",country) `comment("fix country name to match JHU value")`]
+
+| stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region, population
+| eval "Incident Rate"=(Confirmed/population)*100
+| sort $top$ "Incident Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate">
+          <option name="precision">4</option>
+        </format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>CONFIRMED per capita (Incident Rate) - Highest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| join Country_Region
+    [| inputlookup world-population-est2020.csv
+    | fields country population
+    | rename country AS Country_Region
+    | eval country=if(country="US","United States",country) `comment("fix country name to match JHU value")`]
+
+| stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region, population
+| eval "Incident Rate"=(Confirmed/population)*100
+| sort $top$ -"Incident Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate"></format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>DEATHS - Lowest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Deaths) AS Deaths latest(_time) AS date by Country_Region
+| sort $top$ "Deaths"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Deaths">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Deaths">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DEATHS - Highest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Deaths) AS Deaths latest(_time) AS date by Country_Region
+| sort $top$ -"Deaths"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Deaths">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Deaths">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>DEATH RATE - Lowest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Deaths) AS Deaths sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region
+| eval "Death Rate"=(Deaths/Confirmed)*100
+| sort $top$ "Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="precision">4</option>
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DEATH RATE - Highest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats sum(Deaths) AS Deaths sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region
+| eval "Death Rate"=(Deaths/Confirmed)*100
+| sort $top$ -"Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

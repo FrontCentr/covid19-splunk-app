@@ -1,0 +1,784 @@
+<form theme="dark">
+  <label>COVID-19 - States &amp; Counties - Daily Status (multiselect)</label>
+  <description>by @FrontCentr</description>
+  <fieldset submitButton="false">
+    <input type="dropdown" token="country" searchWhenChanged="true">
+      <label>Country</label>
+      <fieldForLabel>Country_Region</fieldForLabel>
+      <fieldForValue>Country_Region</fieldForValue>
+      <search>
+        <query>index=covid
+| fields Country_Region
+| dedup Country_Region
+| sort Country_Region</query>
+      </search>
+      <default>US</default>
+    </input>
+    <input type="multiselect" token="state1" searchWhenChanged="true">
+      <label>State</label>
+      <fieldForLabel>Province_State</fieldForLabel>
+      <fieldForValue>Province_State</fieldForValue>
+      <search>
+        <query>index=covid Country_Region="$country$" Province_State!="*, *"
+| fields Province_State
+| dedup Province_State
+| sort Province_State</query>
+      </search>
+      <choice value="*">All</choice>
+      <valuePrefix>Province_State="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <change>
+        <!-- use predefined input tokens to set tokens for the selected label and value -->
+        <set token="state1_label">$label$</set>
+      </change>
+    </input>
+    <input type="multiselect" token="county1" searchWhenChanged="true">
+      <label>County</label>
+      <fieldForLabel>label</fieldForLabel>
+      <fieldForValue>Admin2</fieldForValue>
+      <search>
+        <query>index=covid Country_Region=$country$ $state1$
+| fields Admin2 Province_State
+| dedup Admin2 Province_State
+| eval label=Admin2." (".Province_State.")"
+| eval Admin2=Admin2."\" AND Province_State=\"".Province_State
+| sort Admin2</query>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </search>
+      <choice value="*">All</choice>
+      <delimiter> OR </delimiter>
+      <valuePrefix>(Admin2="</valuePrefix>
+      <valueSuffix>")</valueSuffix>
+    </input>
+    <input type="dropdown" token="show_state" searchWhenChanged="true">
+      <label>Show State Snapshot?</label>
+      <choice value="true">True</choice>
+      <choice value="">False</choice>
+      <default>true</default>
+    </input>
+    <input type="dropdown" token="show_county" searchWhenChanged="true">
+      <label>Show County Snapshot?</label>
+      <choice value="true">True</choice>
+      <choice value="">False</choice>
+      <default>true</default>
+    </input>
+    <input type="dropdown" token="size" searchWhenChanged="true">
+      <label>Chart Size</label>
+      <choice value="small">Small</choice>
+      <choice value="medium">Medium</choice>
+      <choice value="large">Large</choice>
+      <default>medium</default>
+    </input>
+    <input type="dropdown" token="trellis" searchWhenChanged="true">
+      <label>Show All States?</label>
+      <choice value="1">True</choice>
+      <choice value="0">False</choice>
+      <default>1</default>
+    </input>
+    <input type="dropdown" token="trellis_counties" searchWhenChanged="true">
+      <label>Show All Counties?</label>
+      <choice value="1">True</choice>
+      <choice value="0">False</choice>
+      <default>1</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Last Updated:</title>
+        <search>
+          <query>index="covid" host="covid-19"
+| dedup source
+| fields source
+
+`comment("get CSV name which is the date")`
+| eval time=substr(source, len(source)-13, 10)
+
+| sort time
+| stats last(time) AS last_time
+
+| table last_time</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">56</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">large</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <single>
+        <search>
+          <query>| makeresults
+| eval trellis="0"
+| eval title=if(trellis="$trellis$",upper("$state1_label$"),"STATE REPORTS")
+| fields title</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">50</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>CONFIRMED Cases</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($state1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| timechart sum(Confirmed) AS Confirmed by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">185</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1000,10000,100000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>CONFIRMED (per capita) - "Incident Rate"</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($state1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+| dedup day,Province_State,County sortby -last_update `comment("keep only the most recently indexed results. In other words, if more than one value exists for given day due to adjustments of historical data, only show the freshest, most recently updated value.")` 
+
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+`comment("| eval Active=if(Admin2='Okaloosa' AND Active='102102',102,Active)")` `comment("Fix Okaloosa on 2020-04-13")`
+
+| join Province_State
+    [| inputlookup us-census-est2019-states.csv
+    | fields state 2019
+    | rename state AS Province_State, 2019 AS population]
+    
+| rename Province_State AS State
+
+| timechart eval(sum(Confirmed)/first(population)*100) AS percent_of_population by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">188</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,0.09,1,10]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">of total population</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>DEATHS</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($state1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")` 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| timechart sum(Deaths) AS Deaths by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">191</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,100,1000,10000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>DEATH RATE</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($state1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">183</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,0.8,1.4,2]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$county1$,$show_county$">
+      <single>
+        <search>
+          <query>| makeresults
+| eval title="COUNTY REPORTS"</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">50</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$county1$,$show_county$">
+      <title>CONFIRMED Cases</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($county1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| eval County=County." County (".State.")" 
+| timechart sum(Confirmed) AS Confirmed by County</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">197</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1000,10000,100000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis_counties$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$county1$,$show_county$">
+      <title>CONFIRMED (per capita) - "Incident Rate"</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($county1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+| dedup day,Province_State,County sortby -last_update `comment("keep only the most recently indexed results. In other words, if more than one value exists for given day due to adjustments of historical data, only show the freshest, most recently updated value.")` 
+
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+`comment("| eval Active=if(Admin2='Okaloosa' AND Active='102102',102,Active)")` `comment("Fix Okaloosa on 2020-04-13")`
+
+| join Province_State County
+    [| inputlookup us-census-2019est.csv
+    | fields state county 2019
+        | eval county=if(county="New York","New York City",county) `comment("Rename New York County to conform with the fact that Johns Hopkins data uses New York City instead of New York County")`
+    | rename state AS Province_State, county AS Admin2, 2019 AS population
+    | search $county1$
+    | rename Admin2 AS County]
+    
+| rename Province_State AS State
+
+| eval County=County." County (".State.")" 
+
+| timechart eval(sum(Confirmed)/sum(population)*100) AS percent_of_population by County</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">178</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,0.1,1,10]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">$trellis_counties$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">of total population</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$county1$,$show_county$">
+      <title>DEATHS</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($county1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| eval County=County." County (".State.")" 
+| timechart sum(Deaths) AS Deaths by County</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">191</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,100,1000,10000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis_counties$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$county1$,$show_county$">
+      <title>DEATH RATE</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19" ($county1$)
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+| eval County=County." County (".State.")" 
+| timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by County</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">183</option>
+        <option name="numberPrecision">0.00</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,0.8,1.4,2]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis_counties$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="trendInterval">-24h</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <single>
+        <search>
+          <query>| makeresults
+| eval trellis="0"
+| eval title=if(trellis="$trellis$",upper("$state1_label$"),"STATE REPORTS (Extra)")
+| fields title</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">50</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,30,70,100]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>PEOPLE TESTED</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19-us" ($state1$)
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| timechart first(People_Tested) AS People_Tested by State `comment("other: People_Hospitalized Hospitalization_Rate ")`</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">182</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>PEOPLE TESTED - INCIDENT RATE PER TEST</title>
+      <single>
+        <title>(Percent of people tested who are confirmed positive for COVID-19)</title>
+        <search>
+          <query>index="covid" host="covid-19-us" ($state1$)
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| timechart eval(first(Confirmed)/first(People_Tested)*100) AS Tested_Positive_Rate by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">178</option>
+        <option name="numberPrecision">0.0</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,15,30,45]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>PEOPLE HOSPITALIZED</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19-us" ($state1$)
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| timechart first(People_Hospitalized) AS People_Hospitalized by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">191</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0x006d9c","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,100,1000,10000]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">percent</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$state1$,$show_state$">
+      <title>HOSPITALIZATION RATE</title>
+      <single>
+        <search>
+          <query>index="covid" host="covid-19-us" ($state1$)
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+| eval last_update=_indextime `comment("This is important for the timechart to present only the most updated results -- in case old results have been updated")` 
+
+| dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| timechart first(Hospitalization_Rate) AS Hospitalization_Rate by State</query>
+          <earliest>0</earliest>
+          <latest></latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="height">180</option>
+        <option name="numberPrecision">0.0</option>
+        <option name="rangeColors">["0x53a051","0x006d9c","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[1,10,15,20]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">$trellis$</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">$size$</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="unit">%</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+</form>

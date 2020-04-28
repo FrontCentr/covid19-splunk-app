@@ -1,0 +1,747 @@
+<form theme="dark">
+  <label>COVID-19 - States - Best/Worst (US)</label>
+  <description>Custom Visualizations created by @FrontCentr showing coronavirus data from Johns Hopkins University CSSE (github.com/CSSEGISandData). US population data from census.gov.</description>
+  <fieldset submitButton="true" autoRun="false">
+    <input type="time" token="time" searchWhenChanged="true">
+      <label></label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="dates" searchWhenChanged="true">
+      <label>Dates</label>
+      <choice value="placeholder">Show</choice>
+      <choice value="date">Hide</choice>
+      <default>date</default>
+    </input>
+    <input type="text" token="top" searchWhenChanged="true">
+      <label>Top</label>
+      <default>5</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>CONFIRMED - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(Confirmed) AS Confirmed latest(_time) AS date by State
+| sort $top$ "Confirmed"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Confirmed">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>CONFIRMED - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+    `comment("| fields _time,Confirmed,Deaths,FIPS,Recovered,State,County,source,Last_Update")` 
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(Confirmed) AS Confirmed latest(_time) AS date by State
+| sort $top$ -"Confirmed"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Confirmed">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>CONFIRMED per capita (Incident Rate) - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup Province_State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| join Province_State
+    [| inputlookup us-census-est2019-states.csv
+    | fields state 2019
+    | rename state AS Province_State, 2019 AS population]
+    
+| rename Province_State AS State
+
+| stats first(Confirmed) AS Confirmed latest(_time) AS date by State, population
+| eval "Incident Rate"=(Confirmed/population)*100
+| sort $top$ "Incident Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate"></format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>CONFIRMED per capita (Incident Rate) - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup Province_State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| join Province_State
+    [| inputlookup us-census-est2019-states.csv
+    | fields state 2019
+    | rename state AS Province_State, 2019 AS population]
+    
+| rename Province_State AS State
+
+| stats first(Confirmed) AS Confirmed latest(_time) AS date by State, population
+| eval "Incident Rate"=(Confirmed/population)*100
+| sort $top$ -"Incident Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate"></format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>DEATHS - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(Deaths) AS Deaths latest(_time) AS date by State
+| sort $top$ "Deaths"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Deaths">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Deaths">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DEATHS - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(Deaths) AS Deaths latest(_time) AS date by State
+| sort $top$ -"Deaths"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Deaths">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Deaths">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>DEATH RATE - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(Deaths) AS Deaths first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Death Rate"=(Deaths/Confirmed)*100
+| sort $top$ "Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DEATH RATE - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(Deaths) AS Deaths first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Death Rate"=(Deaths/Confirmed)*100
+| sort $top$ -"Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>PEOPLE TESTED - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(People_Tested) AS People_Tested latest(_time) AS date by State
+| sort $top$ -"People_Tested"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="People_Tested">
+          <colorPalette type="minMidMax" maxColor="#53A051" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="People_Tested">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>PEOPLE TESTED - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(People_Tested) AS People_Tested latest(_time) AS date by State
+| sort $top$ "People_Tested"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="People_Tested">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#DC4E41"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="People_Tested">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>POSITIVITY RATE (Per Test) - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(People_Tested) AS People_Tested first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Positivity Rate"=(Confirmed/People_Tested)*100
+| sort $top$ "Positivity Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Positivity Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Positivity Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="People_Tested">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>POSITIVITY RATE (Per Test) - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(People_Tested) AS People_Tested first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Positivity Rate"=(Confirmed/People_Tested)*100
+| sort $top$ -"Positivity Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Positivity Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Positivity Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="People_Tested">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>PEOPLE HOSPITALIZED - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(People_Hospitalized) AS People_Hospitalized latest(_time) AS date by State
+| sort $top$ "People_Hospitalized"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="People_Hospitalized">
+          <option name="precision">0</option>
+        </format>
+        <format type="color" field="People_Hospitalized">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>PEOPLE HOSPITALIZED - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10)
+
+| dedup State sortby -day `comment("keep only the most recent data")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch 
+
+| stats first(People_Hospitalized) AS People_Hospitalized latest(_time) AS date by State
+| sort $top$ -"People_Hospitalized"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="People_Hospitalized">
+          <option name="precision">0</option>
+        </format>
+        <format type="color" field="People_Hospitalized">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>HOSPITALIZATION RATE - Best</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(People_Hospitalized) AS Hospitalized first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Hospitalization Rate"=(Hospitalized/Confirmed)*100
+| sort $top$ "Hospitalization Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Positivity Rate"></format>
+        <format type="color" field="Positivity Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Hospitalization Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Hospitalization Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>HOSPITALIZATION RATE - Worst</title>
+      <table>
+        <search>
+          <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
+
+| rename Province_State AS State 
+
+`comment("get CSV name which is the date")` 
+| eval day=substr(source, len(source)-13, 10) 
+
+| dedup State sortby -day `comment("keep only the most recent date for a given state")` 
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+| stats first(People_Hospitalized) AS Hospitalized first(Confirmed) AS Confirmed latest(_time) AS date by State
+| eval "Hospitalization Rate"=(Hospitalized/Confirmed)*100
+| sort $top$ -"Hospitalization Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Positivity Rate"></format>
+        <format type="color" field="Positivity Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Hospitalization Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Hospitalization Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>
