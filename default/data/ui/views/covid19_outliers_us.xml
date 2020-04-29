@@ -1,5 +1,5 @@
 <form theme="dark">
-  <label>COVID-19 - States - Best/Worst (US)</label>
+  <label>COVID-19 - States - Statistical Comparisons (US)</label>
   <description>Custom Visualizations created by @FrontCentr showing coronavirus data from Johns Hopkins University CSSE (github.com/CSSEGISandData). US population data from census.gov.</description>
   <fieldset submitButton="true" autoRun="false">
     <input type="time" token="time" searchWhenChanged="true">
@@ -22,7 +22,7 @@
   </fieldset>
   <row>
     <panel>
-      <title>CONFIRMED - Best</title>
+      <title>CONFIRMED - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -62,7 +62,7 @@
       </table>
     </panel>
     <panel>
-      <title>CONFIRMED - Worst</title>
+      <title>CONFIRMED - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -104,7 +104,7 @@
   </row>
   <row>
     <panel>
-      <title>CONFIRMED per capita (Incident Rate) - Best</title>
+      <title>CONFIRMED per capita (Incident Rate) - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -161,7 +161,7 @@
       </table>
     </panel>
     <panel>
-      <title>CONFIRMED per capita (Incident Rate) - Worst</title>
+      <title>CONFIRMED per capita (Incident Rate) - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
@@ -220,7 +220,7 @@
   </row>
   <row>
     <panel>
-      <title>DEATHS - Best</title>
+      <title>DEATHS - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -260,7 +260,7 @@
       </table>
     </panel>
     <panel>
-      <title>DEATHS - Worst</title>
+      <title>DEATHS - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
@@ -302,7 +302,7 @@
   </row>
   <row>
     <panel>
-      <title>DEATH RATE - Best</title>
+      <title>DEATH RATE - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -346,7 +346,7 @@
       </table>
     </panel>
     <panel>
-      <title>DEATH RATE - Worst</title>
+      <title>DEATH RATE - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam"
@@ -392,7 +392,7 @@
   </row>
   <row>
     <panel>
-      <title>PEOPLE TESTED - Best</title>
+      <title>PEOPLE TESTED - HIghest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -432,7 +432,7 @@
       </table>
     </panel>
     <panel>
-      <title>PEOPLE TESTED - Worst</title>
+      <title>PEOPLE TESTED - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -474,7 +474,7 @@
   </row>
   <row>
     <panel>
-      <title>POSITIVITY RATE (Per Test) - Best</title>
+      <title>POSITIVITY RATE (Per Test) - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -521,7 +521,7 @@
       </table>
     </panel>
     <panel>
-      <title>POSITIVITY RATE (Per Test) - Worst</title>
+      <title>POSITIVITY RATE (Per Test) - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -570,7 +570,7 @@
   </row>
   <row>
     <panel>
-      <title>PEOPLE HOSPITALIZED - Best</title>
+      <title>PEOPLE HOSPITALIZED - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -610,7 +610,7 @@
       </table>
     </panel>
     <panel>
-      <title>PEOPLE HOSPITALIZED - Worst</title>
+      <title>PEOPLE HOSPITALIZED - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -652,7 +652,7 @@
   </row>
   <row>
     <panel>
-      <title>HOSPITALIZATION RATE - Best</title>
+      <title>HOSPITALIZATION RATE - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -698,7 +698,7 @@
       </table>
     </panel>
     <panel>
-      <title>HOSPITALIZATION RATE - Worst</title>
+      <title>HOSPITALIZATION RATE - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"

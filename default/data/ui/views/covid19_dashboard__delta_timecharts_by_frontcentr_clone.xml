@@ -461,7 +461,7 @@
       <title>New Hospitalizations ($tally_time_label$ Tally) -- note: some states will show negative because they aren't provided cumulative totals (?) ...ignore those results.</title>
       <chart>
         <search>
-          <query>latest=-w@w index="covid" host="covid-19-us" ($state1$)
+          <query>latest=-$tally_time$ index="covid" host="covid-19-us" ($state1$)
 
 | rename Province_State AS State 
 
@@ -476,7 +476,7 @@
 | stats sum(People_Hospitalized) AS People_Hospitalized BY State,_time
 | streamstats current=f window=1 last(People_Hospitalized) as prev_People_Hospitalized by State
 | eval delta=People_Hospitalized-prev_People_Hospitalized
-| timechart span=1w@w sum(delta) AS "New Hospitalizations" by State</query>
+| timechart span=1$tally_time$ sum(delta) AS "New Hospitalizations" by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
