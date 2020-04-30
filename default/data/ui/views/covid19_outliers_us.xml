@@ -570,7 +570,7 @@
   </row>
   <row>
     <panel>
-      <title>PEOPLE HOSPITALIZED - Lowest</title>
+      <title>PEOPLE HOSPITALIZED (cumulative) - Lowest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -583,6 +583,11 @@
 | dedup State sortby -day `comment("keep only the most recent data")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | stats first(People_Hospitalized) AS People_Hospitalized latest(_time) AS date by State
 | sort $top$ "People_Hospitalized"
@@ -610,7 +615,7 @@
       </table>
     </panel>
     <panel>
-      <title>PEOPLE HOSPITALIZED - Highest</title>
+      <title>PEOPLE HOSPITALIZED (cumulative) - Highest</title>
       <table>
         <search>
           <query>index="covid" host="covid-19-us" Country_Region="US" Province_State!="Recovered" Province_State!="*, *" Province_State!="*islands*" Province_State!="*princess*" Province_State!="Guam" Province_State!="*samoa*"
@@ -623,6 +628,11 @@
 | dedup State sortby -day `comment("keep only the most recent data")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | stats first(People_Hospitalized) AS People_Hospitalized latest(_time) AS date by State
 | sort $top$ -"People_Hospitalized"
@@ -665,6 +675,11 @@
 | dedup State sortby -day `comment("keep only the most recent date for a given state")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | stats first(People_Hospitalized) AS Hospitalized first(Confirmed) AS Confirmed latest(_time) AS date by State
 | eval "Hospitalization Rate"=(Hospitalized/Confirmed)*100
@@ -711,6 +726,11 @@
 | dedup State sortby -day `comment("keep only the most recent date for a given state")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | stats first(People_Hospitalized) AS Hospitalized first(Confirmed) AS Confirmed latest(_time) AS date by State
 | eval "Hospitalization Rate"=(Hospitalized/Confirmed)*100

@@ -613,7 +613,7 @@
   </row>
   <row>
     <panel depends="$state1$,$show_state$">
-      <title>PEOPLE HOSPITALIZED</title>
+      <title>PEOPLE HOSPITALIZED (cumulative)</title>
       <chart>
         <search>
           <query>index="covid" host="covid-19-us" ($state1$)
@@ -627,6 +627,11 @@
 | dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | timechart span=1d@d first(People_Hospitalized) AS People_Hospitalized by State</query>
           <earliest>$time.earliest$</earliest>
@@ -663,7 +668,12 @@
 
 | dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
-| eval _time=day_epoch 
+| eval _time=day_epoch
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" Hospitalization_Rate
+| eventstats first(Hospitalization_Rate) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | timechart span=1d@d first(Hospitalization_Rate) AS Hospitalization_Rate by State</query>
           <earliest>$time.earliest$</earliest>

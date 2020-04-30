@@ -458,7 +458,7 @@
   </row>
   <row>
     <panel depends="$state1$,$show_state$">
-      <title>New Hospitalizations ($tally_time_label$ Tally) -- note: some states will show negative because they aren't provided cumulative totals (?) ...ignore those results.</title>
+      <title>New Hospitalizations ($tally_time_label$ Tally)</title>
       <chart>
         <search>
           <query>latest=-$tally_time$ index="covid" host="covid-19-us" ($state1$)
@@ -471,7 +471,12 @@
 
 | dedup day,State sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
-| eval _time=day_epoch 
+| eval _time=day_epoch
+
+`comment("This section removes states that are only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a" `comment("remove states that don't have data for latest date")`
 
 | stats sum(People_Hospitalized) AS People_Hospitalized BY State,_time
 | streamstats current=f window=1 last(People_Hospitalized) as prev_People_Hospitalized by State

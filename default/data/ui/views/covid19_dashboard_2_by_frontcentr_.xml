@@ -83,6 +83,13 @@
       <choice value="0">False</choice>
       <default>1</default>
     </input>
+    <input type="time" token="time" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>0</earliest>
+        <latest></latest>
+      </default>
+    </input>
   </fieldset>
   <row>
     <panel>
@@ -100,8 +107,8 @@
 | stats last(time) AS last_time
 
 | table last_time</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -133,8 +140,8 @@
 | eval trellis="0"
 | eval title=if(trellis="$trellis$",upper("$state1_label$"),"STATE REPORTS")
 | fields title</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -176,8 +183,8 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | timechart sum(Confirmed) AS Confirmed by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -230,8 +237,8 @@
 | rename Province_State AS State
 
 | timechart eval(sum(Confirmed)/first(population)*100) AS percent_of_population by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -275,8 +282,8 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | timechart sum(Deaths) AS Deaths by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -319,8 +326,8 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">trend</option>
@@ -352,8 +359,8 @@
         <search>
           <query>| makeresults
 | eval title="COUNTY REPORTS"</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -396,8 +403,8 @@
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
 | timechart sum(Confirmed) AS Confirmed by County</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -455,8 +462,8 @@
 | eval County=County." County (".State.")" 
 
 | timechart eval(sum(Confirmed)/sum(population)*100) AS percent_of_population by County</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -501,8 +508,8 @@
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
 | timechart sum(Deaths) AS Deaths by County</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -546,8 +553,8 @@
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
 | timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by County</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">trend</option>
@@ -581,8 +588,8 @@
 | eval trellis="0"
 | eval title=if(trellis="$trellis$",upper("$state1_label$"),"STATE REPORTS (Extra)")
 | fields title</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -624,8 +631,8 @@
 | eval _time=day_epoch 
 
 | timechart first(People_Tested) AS People_Tested by State `comment("other: People_Hospitalized Hospitalization_Rate ")`</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -668,8 +675,8 @@
 | eval _time=day_epoch 
 
 | timechart eval(first(Confirmed)/first(People_Tested)*100) AS Tested_Positive_Rate by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -711,9 +718,14 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 
+`comment("This section fixes the problem with some states only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" People_Hospitalized
+| eventstats first(People_Hospitalized) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a"
+
 | timechart first(People_Hospitalized) AS People_Hospitalized by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
@@ -754,9 +766,14 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 
+`comment("This section fixes the problem with some states only sending current hospitalizations instead of cumulative")`
+| fillnull value="n/a" Hospitalization_Rate
+| eventstats first(Hospitalization_Rate) AS latest_hosp_value by State
+| where latest_hosp_value!="n/a"
+
 | timechart first(Hospitalization_Rate) AS Hospitalization_Rate by State</query>
-          <earliest>0</earliest>
-          <latest></latest>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="colorBy">value</option>
