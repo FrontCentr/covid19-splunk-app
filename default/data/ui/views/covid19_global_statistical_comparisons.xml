@@ -118,11 +118,23 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch
 
+`comment("get population")`
 | join Country_Region
     [| inputlookup world-population-est2020.csv
-    | fields country population
-    | rename country AS Country_Region
-    | eval country=if(country="US","United States",country) `comment("fix country name to match JHU value")`]
+        | fields country population
+        
+        `comment("This section re-labels countries to match JHU value")`
+        | eval country=case(
+            country=="United States","US",
+            country=="Taiwan","Taiwan*",
+            country=="Gambia, The","Gambia",
+            country=="Congo, Republic of the","Congo (Brazzaville)",
+            country=="Congo, Democratic Republic of the","Congo (Kinshasa)",
+            country=="Bahamas, The","Bahamas",
+            country=="Holy See (Vatican City)","Holy See",
+            country=="Macedonia","North Macedonia",
+            1=1,country)
+        | rename country AS Country_Region ]
 
 | stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region, population
 | eval "Incident Rate"=(Confirmed/population)*100
@@ -178,11 +190,23 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch
 
+`comment("get population")`
 | join Country_Region
     [| inputlookup world-population-est2020.csv
-    | fields country population
-    | rename country AS Country_Region
-    | eval country=if(country="US","United States",country) `comment("fix country name to match JHU value")`]
+        | fields country population
+        
+        `comment("This section re-labels countries to match JHU value")`
+        | eval country=case(
+            country=="United States","US",
+            country=="Taiwan","Taiwan*",
+            country=="Gambia, The","Gambia",
+            country=="Congo, Republic of the","Congo (Brazzaville)",
+            country=="Congo, Democratic Republic of the","Congo (Kinshasa)",
+            country=="Bahamas, The","Bahamas",
+            country=="Holy See (Vatican City)","Holy See",
+            country=="Macedonia","North Macedonia",
+            1=1,country)
+        | rename country AS Country_Region ]
 
 | stats sum(Confirmed) AS Confirmed latest(_time) AS date by Country_Region, population
 | eval "Incident Rate"=(Confirmed/population)*100
@@ -306,7 +330,7 @@
   </row>
   <row>
     <panel>
-      <title>DEATH RATE - Lowest</title>
+      <title>DEATH RATE (per Case) - Lowest</title>
       <table>
         <search>
           <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
@@ -351,7 +375,7 @@
       </table>
     </panel>
     <panel>
-      <title>DEATH RATE - Highest</title>
+      <title>DEATH RATE (per Case) - Highest</title>
       <table>
         <search>
           <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
@@ -387,6 +411,152 @@
         <format type="color" field="Death Rate">
           <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
           <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>DEATH RATE (per Capita) - Lowest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+`comment("get population")`
+| join Country_Region
+    [| inputlookup world-population-est2020.csv
+        | fields country population
+        
+        `comment("This section re-labels countries to match JHU value")`
+        | eval country=case(
+            country=="United States","US",
+            country=="Taiwan","Taiwan*",
+            country=="Gambia, The","Gambia",
+            country=="Congo, Republic of the","Congo (Brazzaville)",
+            country=="Congo, Democratic Republic of the","Congo (Kinshasa)",
+            country=="Bahamas, The","Bahamas",
+            country=="Holy See (Vatican City)","Holy See",
+            country=="Macedonia","North Macedonia",
+            1=1,country)
+        | rename country AS Country_Region ]
+
+| stats sum(Deaths) AS Deaths latest(_time) AS date by Country_Region, population
+| eval "Death Rate"=(Deaths/population)*100
+| sort $top$ "Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate">
+          <option name="precision">4</option>
+        </format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="Confirmed">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DEATH RATE (per Capita) - Highest</title>
+      <table>
+        <search>
+          <query>index="covid" (host="covid-19" AND Country_Region!="US") OR host="covid-19-us"
+
+| eval day=substr(source, len(source)-13, 10) `comment("get CSV name which is the date")` 
+| eval last_update=_indextime `comment("This is important for the results to present only the most updated results -- in case old results have been updated")` 
+| eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
+| eval State=coalesce(Province_State,"") `comment("fix null Admin2 fields and rename as County")`
+
+| dedup Country_Region,State,County sortby -day,-last_update `comment("keep only the most recent data")`  
+| eval day_epoch=strptime(day,"%m-%d-%Y") 
+| eval _time=day_epoch
+
+`comment("get population")`
+| join Country_Region
+    [| inputlookup world-population-est2020.csv
+        | fields country population
+        
+        `comment("This section re-labels countries to match JHU value")`
+        | eval country=case(
+            country=="United States","US",
+            country=="Taiwan","Taiwan*",
+            country=="Gambia, The","Gambia",
+            country=="Congo, Republic of the","Congo (Brazzaville)",
+            country=="Congo, Democratic Republic of the","Congo (Kinshasa)",
+            country=="Bahamas, The","Bahamas",
+            country=="Holy See (Vatican City)","Holy See",
+            country=="Macedonia","North Macedonia",
+            1=1,country)
+        | rename country AS Country_Region ]
+
+| stats sum(Deaths) AS Deaths latest(_time) AS date by Country_Region, population
+| eval "Death Rate"=(Deaths/population)*100
+| sort $top$ -"Death Rate"
+| convert timeformat="%F" ctime(date)
+| fields - $dates$</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">100</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">true</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="Death Rate">
+          <option name="unit">%</option>
+        </format>
+        <format type="color" field="Death Rate">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="Incident Rate">
+          <option name="precision">4</option>
+        </format>
+        <format type="color" field="Incident Rate">
+          <colorPalette type="minMidMax" maxColor="#3C444D" minColor="#53A051"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="population">
+          <option name="precision">0</option>
         </format>
         <format type="number" field="Confirmed">
           <option name="precision">0</option>
