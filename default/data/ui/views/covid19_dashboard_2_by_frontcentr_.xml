@@ -182,7 +182,7 @@
 | dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
-| timechart sum(Confirmed) AS Confirmed by State</query>
+| timechart span=1d@d sum(Confirmed) AS Confirmed by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -236,7 +236,7 @@
     
 | rename Province_State AS State
 
-| timechart eval(sum(Confirmed)/first(population)*100) AS percent_of_population by State</query>
+| timechart span=1d@d eval(sum(Confirmed)/first(population)*100) AS percent_of_population by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -281,7 +281,7 @@
 | dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
-| timechart sum(Deaths) AS Deaths by State</query>
+| timechart span=1d@d sum(Deaths) AS Deaths by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -325,7 +325,7 @@
 | dedup day,State,County sortby -last_update `comment("keep only the most recently indexed results. in other words, if more than one value exists for given day due to adjusting of historical data, only show the freshest, most recently updated value.")` 
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
-| timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by State</query>
+| timechart span=1d@d eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -402,7 +402,7 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
-| timechart sum(Confirmed) AS Confirmed by County</query>
+| timechart span=1d@d sum(Confirmed) AS Confirmed by County</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -461,7 +461,7 @@
 
 | eval County=County." County (".State.")" 
 
-| timechart eval(sum(Confirmed)/sum(population)*100) AS percent_of_population by County</query>
+| timechart span=1d@d eval(sum(Confirmed)/sum(population)*100) AS percent_of_population by County</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -507,7 +507,7 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
-| timechart sum(Deaths) AS Deaths by County</query>
+| timechart span=1d@d sum(Deaths) AS Deaths by County</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -552,7 +552,7 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 | eval County=County." County (".State.")" 
-| timechart eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by County</query>
+| timechart span=1d@d eval(sum(Deaths)/sum(Confirmed)*100) AS "Death Rate" by County</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -630,7 +630,7 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 
-| timechart first(People_Tested) AS People_Tested by State `comment("other: People_Hospitalized Hospitalization_Rate ")`</query>
+| timechart span=1d@d first(People_Tested) AS People_Tested by State `comment("other: People_Hospitalized Hospitalization_Rate ")`</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -674,7 +674,7 @@
 | eval day_epoch=strptime(day,"%m-%d-%Y") 
 | eval _time=day_epoch 
 
-| timechart eval(first(Confirmed)/first(People_Tested)*100) AS Tested_Positive_Rate by State</query>
+| timechart span=1d@d eval(first(Confirmed)/first(People_Tested)*100) AS Tested_Positive_Rate by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -723,7 +723,7 @@
 | eventstats first(People_Hospitalized) AS latest_hosp_value by State
 | where latest_hosp_value!="n/a"
 
-| timechart first(People_Hospitalized) AS People_Hospitalized by State</query>
+| timechart span=1d@d first(People_Hospitalized) AS People_Hospitalized by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -771,7 +771,7 @@
 | eventstats first(Hospitalization_Rate) AS latest_hosp_value by State
 | where latest_hosp_value!="n/a"
 
-| timechart first(Hospitalization_Rate) AS Hospitalization_Rate by State</query>
+| timechart span=1d@d first(Hospitalization_Rate) AS Hospitalization_Rate by State</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
