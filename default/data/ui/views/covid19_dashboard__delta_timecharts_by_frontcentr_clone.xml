@@ -186,7 +186,7 @@
       <title>New Cases ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-$tally_time$ index="covid" host="covid-19" ($state1$) source!="*\\01-*" `comment("remove january numbers")`
+          <query>index="covid" host="covid-19" ($state1$) source!="*\\01-*" `comment("remove january numbers")`
 
 | rename Province_State AS State 
 | eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
@@ -200,8 +200,15 @@
 | eval _time=day_epoch
 | stats sum(Confirmed) AS Confirmed BY State,_time
 | streamstats current=f window=1 last(Confirmed) as prev_Confirmed by State
+
+`comment("get delta values")`
 | eval delta=Confirmed-coalesce(prev_Confirmed,0)
-| timechart span=1$tally_time$ sum(delta) AS "New Cases" by State</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("remove negative delta values. this shouldn't happen")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Cases" by State
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("remove last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -218,6 +225,7 @@
         <option name="charting.layout.splitSeries">0</option>
         <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
         <option name="charting.legend.placement">none</option>
+        <option name="height">280</option>
         <option name="refresh.display">progressbar</option>
         <option name="trellis.enabled">$trellis$</option>
         <option name="trellis.scales.shared">0</option>
@@ -230,7 +238,7 @@
       <title>New Deaths ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-$tally_time$ index="covid" host="covid-19" ($state1$) source!="*\\01-*" `comment("remove january numbers")`
+          <query>index="covid" host="covid-19" ($state1$) source!="*\\01-*" `comment("remove january numbers")`
 
 | rename Province_State AS State 
 | eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
@@ -244,20 +252,30 @@
 | eval _time=day_epoch
 | stats sum(Deaths) AS Deaths BY State,_time
 | streamstats current=f window=1 last(Deaths) as prev_Deaths by State
+
+`comment("get delta values")`
 | eval delta=Deaths-coalesce(prev_Deaths,0)
-| timechart span=1$tally_time$ sum(delta) AS "New Deaths" by State</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("remove negative delta values. this shouldn't happen")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Deaths" by State
+
+`comment("this section removes partial time buckets")`
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("remove last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
         <option name="charting.axisTitleX.visibility">collapsed</option>
-        <option name="charting.axisTitleY.visibility">visible</option>
-        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisTitleY2.visibility">collapsed</option>
         <option name="charting.axisY.scale">$y_axis$</option>
         <option name="charting.chart">column</option>
         <option name="charting.chart.stackMode">stacked</option>
         <option name="charting.drilldown">none</option>
-        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="height">276</option>
         <option name="refresh.display">progressbar</option>
         <option name="trellis.enabled">$trellis$</option>
         <option name="trellis.scales.shared">0</option>
@@ -302,7 +320,7 @@
       <title>New Cases ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-w@w index="covid" host="covid-19" ($county1$)
+          <query>index="covid" host="covid-19" ($county1$)
 
 | rename Province_State AS State 
 | eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
@@ -318,8 +336,17 @@
 | eval County=County." County (".State.")" 
 | stats sum(Confirmed) AS Confirmed BY County,_time
 | streamstats current=f window=1 last(Confirmed) as prev_Confirmed by County
+
+`comment("get delta values")`
 | eval delta=Confirmed-coalesce(prev_Confirmed,0)
-| timechart span=1$tally_time$ sum(delta) AS "New Cases" by County</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("zeroize negative delta values. this shouldn't happen")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Cases" by County
+
+`comment("this section removes partial time buckets")`
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("remove last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -345,7 +372,7 @@
       <title>New Deaths ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-$tally_time$ index="covid" host="covid-19" ($county1$)
+          <query>index="covid" host="covid-19" ($county1$)
 
 | rename Province_State AS State 
 | eval County=coalesce(Admin2,"") `comment("fix null Admin2 fields and rename as County")`
@@ -361,8 +388,17 @@
 | eval County=County." County (".State.")" 
 | stats sum(Deaths) AS Deaths BY County,_time
 | streamstats current=f window=1 last(Deaths) as prev_Deaths by County
+
+`comment("get delta values")`
 | eval delta=Deaths-coalesce(prev_Deaths,0)
-| timechart span=1$tally_time$ sum(delta) AS "New Deaths" by County</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("zeroize negative delta values. this shouldn't happen")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Deaths" by County
+
+`comment("this section removes partial time buckets")`
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("nullify last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
@@ -375,7 +411,7 @@
         <option name="charting.chart.stackMode">stacked</option>
         <option name="charting.drilldown">none</option>
         <option name="charting.legend.placement">none</option>
-        <option name="height">155</option>
+        <option name="height">269</option>
         <option name="refresh.display">progressbar</option>
         <option name="trellis.enabled">$trellis_counties$</option>
         <option name="trellis.scales.shared">0</option>
@@ -420,7 +456,7 @@
       <title>New People Tested ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-$tally_time$ index="covid" host="covid-19-us" ($state1$)
+          <query>index="covid" host="covid-19-us" ($state1$)
 
 | rename Province_State AS State 
 
@@ -434,20 +470,29 @@
 
 | stats sum(People_Tested) AS People_Tested BY State,_time
 | streamstats current=f window=1 last(People_Tested) as prev_People_Tested by State
+
+`comment("get delta values")`
 | eval delta=People_Tested-prev_People_Tested
-| timechart span=1$tally_time$ sum(delta) AS "New Tests" by State</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("zeroize negative delta values. this shouldn't happen with this dataset")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Tests" by State
+
+`comment("this section removes partial time buckets")`
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("nullify last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
-        <option name="charting.axisTitleX.visibility">visible</option>
-        <option name="charting.axisTitleY.visibility">visible</option>
-        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisTitleY2.visibility">collapsed</option>
         <option name="charting.axisY.scale">$y_axis$</option>
         <option name="charting.chart">column</option>
         <option name="charting.chart.stackMode">stacked</option>
         <option name="charting.drilldown">none</option>
-        <option name="charting.legend.placement">right</option>
+        <option name="charting.legend.placement">none</option>
         <option name="height">256</option>
         <option name="refresh.display">progressbar</option>
         <option name="trellis.enabled">$trellis$</option>
@@ -461,7 +506,7 @@
       <title>New Hospitalizations ($tally_time_label$ Tally)</title>
       <chart>
         <search>
-          <query>latest=-$tally_time$ index="covid" host="covid-19-us" ($state1$)
+          <query>index="covid" host="covid-19-us" ($state1$)
 
 | rename Province_State AS State 
 
@@ -480,20 +525,29 @@
 
 | stats sum(People_Hospitalized) AS People_Hospitalized BY State,_time
 | streamstats current=f window=1 last(People_Hospitalized) as prev_People_Hospitalized by State
+
+`comment("get delta values")`
 | eval delta=People_Hospitalized-prev_People_Hospitalized
-| timechart span=1$tally_time$ sum(delta) AS "New Hospitalizations" by State</query>
+| eval delta=if(delta&lt;0,0,delta) `comment("zeroize negative delta values. this shouldn't happen with this dataset")`
+
+| timechart span=$tally_time$ sum(delta) AS "New Hospitalizations" by State
+
+`comment("this section removes partial time buckets")`
+| eval bucket_end=relative_time(_time, "+1$tally_time$") `comment("find end of the time-bucket")`
+| eval _time=if(now()&gt;_time AND now()&lt;bucket_end,null(),_time) `comment("nullify last row if its time bucket is not yet complete. in other words, don't show partial results")`
+| fields - bucket_end</query>
           <earliest>$time.earliest$</earliest>
           <latest>$time.latest$</latest>
           <sampleRatio>1</sampleRatio>
         </search>
-        <option name="charting.axisTitleX.visibility">visible</option>
-        <option name="charting.axisTitleY.visibility">visible</option>
-        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisTitleY2.visibility">collapsed</option>
         <option name="charting.axisY.scale">$y_axis$</option>
         <option name="charting.chart">column</option>
         <option name="charting.chart.stackMode">stacked</option>
         <option name="charting.drilldown">none</option>
-        <option name="charting.legend.placement">right</option>
+        <option name="charting.legend.placement">none</option>
         <option name="height">259</option>
         <option name="refresh.display">progressbar</option>
         <option name="trellis.enabled">$trellis$</option>
